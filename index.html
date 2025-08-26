@@ -713,19 +713,20 @@
     // ===== ULTIMATE 3D SYSTEM - MAIN APPLICATION =====
     
     // All module imports are now at the top level of the script
-    import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
-    import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
-    import { TransformControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/TransformControls.js";
-    import { GLTFLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
-    import { DRACOLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/DRACOLoader.js";
-    import { RGBELoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/RGBELoader.js";
-    import { EffectComposer } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/EffectComposer.js";
-    import { RenderPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/RenderPass.js";
-    import { UnrealBloomPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/UnrealBloomPass.js";
+    // Updated to version 0.167.0 to fix the Pass.js MIME type issue
+    import * as THREE from "https://unpkg.com/three@0.167.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/OrbitControls.js";
+    import { TransformControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/TransformControls.js";
+    import { GLTFLoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/DRACOLoader.js";
+    import { RGBELoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/RGBELoader.js";
+    import { EffectComposer } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/EffectComposer.js";
+    import { RenderPass } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/RenderPass.js";
+    import { UnrealBloomPass } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 
     // Global State Management
     class UltimateSystemState {
-        constructor() {
+        constructor( ) {
             this.webgpuSupported = false;
             this.webgpuDevice = null;
             this.webgpuContext = null;
@@ -1209,6 +1210,7 @@
     initializeUltimateSystem();
 
 </script>
+
 
 </body>
 </html>
