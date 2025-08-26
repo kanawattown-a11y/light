@@ -712,8 +712,6 @@
 <script type="module">
     // ===== ULTIMATE 3D SYSTEM - MAIN APPLICATION =====
     
-    // All module imports are now at the top level of the script
-    // Updated to version 0.167.0 to fix the Pass.js MIME type issue
     import * as THREE from "https://unpkg.com/three@0.167.0/build/three.module.js";
     import { OrbitControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/OrbitControls.js";
     import { TransformControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/TransformControls.js";
@@ -845,7 +843,7 @@
         }
     }
 
-    // ===== THREE.JS SCENE SETUP =====
+    // ===== THREE.JS SCENE SETUP (CORRECTED) =====
     async function initThreeJS() {
         // Scene setup
         const scene = new THREE.Scene();
@@ -861,15 +859,20 @@
         camera.position.set(15, 10, 25);
         camera.name = "MainCamera";
         
+        // *** START: CORRECTED RENDERER SETUP ***
         // Renderer setup (fallback to WebGL if WebGPU not available)
-        const canvas = document.getElementById('webgpu-canvas');
+        // We let Three.js create its own canvas to avoid context conflicts.
         const renderer = new THREE.WebGLRenderer({ 
-            canvas: canvas,
             antialias: true, 
             powerPreference: "high-performance",
             alpha: true
         });
         
+        // Add the renderer's canvas to our viewport div
+        const viewport = document.getElementById('viewport');
+        viewport.appendChild(renderer.domElement);
+        // *** END: CORRECTED RENDERER SETUP ***
+
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -878,7 +881,7 @@
         renderer.toneMappingExposure = 1.2;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-        // Controls
+        // Controls - they will correctly use the renderer's canvas
         const orbitControls = new OrbitControls(camera, renderer.domElement);
         orbitControls.enableDamping = true;
         orbitControls.dampingFactor = 0.05;
@@ -1210,6 +1213,7 @@
     initializeUltimateSystem();
 
 </script>
+
 
 
 </body>
