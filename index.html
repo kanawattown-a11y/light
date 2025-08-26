@@ -832,18 +832,19 @@
         }
 
         // ===== THREE.JS SCENE SETUP =====
+            <script type="module">
+                import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+                import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+                import { TransformControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/TransformControls.js";
+                import { GLTFLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
+                import { DRACOLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/DRACOLoader.js";
+                import { RGBELoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/RGBELoader.js";
+                import { EffectComposer } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/EffectComposer.js";
+                import { RenderPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/RenderPass.js";
+                import { UnrealBloomPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/UnrealBloomPass.js";
+            </script>
         async function initThreeJS() {
-        <script type="module">
-            import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
-            import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
-            import { TransformControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/TransformControls.js";
-            import { GLTFLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
-            import { DRACOLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/DRACOLoader.js";
-            import { RGBELoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/RGBELoader.js";
-            import { EffectComposer } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/EffectComposer.js";
-            import { RenderPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/RenderPass.js";
-            import { UnrealBloomPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/UnrealBloomPass.js";
-        </script>
+    
 
             // Scene setup
             const scene = new THREE.Scene();
