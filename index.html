@@ -101,17 +101,6 @@
             overflow: hidden;
         }
 
-        .panel-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            animation: shimmer 3s infinite;
-        }
-
         @keyframes shimmer {
             0% { left: -100%; }
             100% { left: 100%; }
@@ -697,8 +686,8 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "three": "https://unpkg.com/three@0.167.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.167.0/examples/jsm/",
                 "@tensorflow/tfjs": "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js",
                 "@tensorflow/tfjs-backend-webgl": "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.15.0/dist/tf-backend-webgl.min.js",
                 "@tensorflow/tfjs-backend-cpu": "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@4.15.0/dist/tf-backend-cpu.min.js"
@@ -712,15 +701,15 @@
 <script type="module">
     // ===== ULTIMATE 3D SYSTEM - MAIN APPLICATION =====
     
-    import * as THREE from "https://unpkg.com/three@0.167.0/build/three.module.js";
-    import { OrbitControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/OrbitControls.js";
-    import { TransformControls } from "https://unpkg.com/three@0.167.0/examples/jsm/controls/TransformControls.js";
-    import { GLTFLoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/GLTFLoader.js";
-    import { DRACOLoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/DRACOLoader.js";
-    import { RGBELoader } from "https://unpkg.com/three@0.167.0/examples/jsm/loaders/RGBELoader.js";
-    import { EffectComposer } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/EffectComposer.js";
-    import { RenderPass } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/RenderPass.js";
-    import { UnrealBloomPass } from "https://unpkg.com/three@0.167.0/examples/jsm/postprocessing/UnrealBloomPass.js";
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { TransformControls } from "three/addons/controls/TransformControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+    import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+    import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+    import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+    import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
     // Global State Management
     class UltimateSystemState {
@@ -797,9 +786,8 @@
     async function initAI() {
         try {
             // Load TensorFlow.js
-            await import('@tensorflow/tfjs');
-            await import('@tensorflow/tfjs-backend-webgl');
-            await import('@tensorflow/tfjs-backend-cpu');
+            // The importmap handles the direct import of tfjs and its backends
+            // No need for explicit import() calls here if using importmap
             
             // Set backend preference
             if (systemState.webgpuSupported) {
@@ -906,102 +894,398 @@
         directionalLight.shadow.camera.bottom = -50;
         scene.add(directionalLight);
 
-        // Advanced floor with PBR materials
-        const floorGeometry = new THREE.PlaneGeometry(100, 100);
-        const floorMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2a2a2a,
-            roughness: 0.1,
-            metalness: 0.8,
-            envMapIntensity: 1.0
-        });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        floor.name = "AdvancedFloor";
-        floor.userData.isSelectable = true;
-        scene.add(floor);
+        // Environment map for realistic reflections
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
 
-        // Post-processing setup
+        new RGBELoader()
+            .setPath('assets/textures/') // Assuming HDRIs are in an assets/textures folder
+            .load('royal_esplanade_1k.hdr', (texture) => {
+                const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                scene.environment = envMap;
+                texture.dispose();
+                pmremGenerator.dispose();
+            });
+
+        // Add a ground plane
+        const planeGeometry = new THREE.PlaneGeometry(100, 100);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        // Post-processing for bloom effect
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0;
+        bloomPass.strength = 0.5; // Adjust bloom strength
+        bloomPass.radius = 0;
+
         const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-        
-        const bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.8, 0.4, 0.85
-        );
+        composer.addPass(renderScene);
         composer.addPass(bloomPass);
 
-        // Store references
+        // Draco Loader for GLTF compression
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+
+        // GLTF Loader
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.setDRACOLoader(dracoLoader);
+
+        // Store in systemState
         systemState.scene = scene;
         systemState.camera = camera;
         systemState.renderer = renderer;
         systemState.orbitControls = orbitControls;
         systemState.transformControls = transformControls;
+        systemState.gltfLoader = gltfLoader;
         systemState.composer = composer;
 
-        // Add some default objects
-        addDefaultObjects(scene);
-        
-        return { scene, camera, renderer, orbitControls, transformControls, composer };
-    }
+        // Example: Add a default cube
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0x00ff88, metalness: 0.5, roughness: 0.5 });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, 0.5, 0);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        cube.name = "DefaultCube";
+        cube.userData.isSelectable = true;
+        scene.add(cube);
 
-    // ===== ADD DEFAULT ADVANCED OBJECTS =====
-    function addDefaultObjects(scene) {
-        // Advanced geometric shapes with PBR materials
-        const geometries = [
-            { geo: new THREE.BoxGeometry(2, 2, 2), name: "AdvancedCube", pos: [5, 1, 0] },
-            { geo: new THREE.SphereGeometry(1.5, 32, 32), name: "AdvancedSphere", pos: [-5, 1.5, 0] },
-            { geo: new THREE.CylinderGeometry(1, 1, 3, 32), name: "AdvancedCylinder", pos: [0, 1.5, 5] },
-            { geo: new THREE.TorusGeometry(1.5, 0.5, 16, 100), name: "AdvancedTorus", pos: [0, 1.5, -5] }
-        ];
+        // Add to outliner
+        addSceneObjectToOutliner(cube);
 
-        geometries.forEach((item, index) => {
-            const material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color().setHSL(index * 0.25, 0.8, 0.6),
-                roughness: 0.2 + index * 0.2,
-                metalness: 0.1 + index * 0.2,
-                envMapIntensity: 1.0
-            });
-            
-            const mesh = new THREE.Mesh(item.geo, material);
-            mesh.position.set(...item.pos);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            mesh.name = item.name;
-            mesh.userData.isSelectable = true;
-            scene.add(mesh);
+        // Initial selection
+        systemState.selectedObject = cube;
+        transformControls.attach(cube);
+        updatePropertiesPanel(cube);
+
+        // Setup click for object selection
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('click', (event) => {
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                let clickedObject = intersects[0].object;
+                // Traverse up to find a selectable parent if the clicked object is part of a group
+                while (clickedObject && !clickedObject.userData.isSelectable && clickedObject !== scene) {
+                    clickedObject = clickedObject.parent;
+                }
+
+                if (clickedObject && clickedObject.userData.isSelectable) {
+                    if (systemState.selectedObject) {
+                        // Deselect previous
+                        const prevSelectedElement = document.querySelector(`#scene-outliner li[data-uuid="${systemState.selectedObject.uuid}"]`);
+                        if (prevSelectedElement) prevSelectedElement.classList.remove('selected');
+                    }
+                    systemState.selectedObject = clickedObject;
+                    transformControls.attach(clickedObject);
+                    updatePropertiesPanel(clickedObject);
+
+                    // Select in outliner
+                    const selectedElement = document.querySelector(`#scene-outliner li[data-uuid="${clickedObject.uuid}"]`);
+                    if (selectedElement) selectedElement.classList.add('selected');
+                }
+            } else {
+                // Clicked on empty space, deselect
+                if (systemState.selectedObject) {
+                    const prevSelectedElement = document.querySelector(`#scene-outliner li[data-uuid="${systemState.selectedObject.uuid}"]`);
+                    if (prevSelectedElement) prevSelectedElement.classList.remove('selected');
+                    systemState.selectedObject = null;
+                    transformControls.detach();
+                    updatePropertiesPanel(null);
+                }
+            }
         });
 
-        // Advanced particle system
-        createAdvancedParticleSystem(scene);
+        // Handle TransformControls change event to update properties panel
+        transformControls.addEventListener('objectChange', () => {
+            if (systemState.selectedObject) {
+                updatePropertiesPanel(systemState.selectedObject);
+            }
+        });
+
+        // Add default particle system
+        addAdvancedParticleSystem();
     }
 
-    // ===== ADVANCED PARTICLE SYSTEM =====
-    function createAdvancedParticleSystem(scene) {
-        const particleCount = 1000;
-        const particles = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
+    // ===== SCENE OUTLINER FUNCTIONS =====
+    function addSceneObjectToOutliner(object) {
+        const outliner = document.getElementById('scene-outliner').querySelector('ul');
+        const listItem = document.createElement('li');
+        listItem.dataset.uuid = object.uuid;
+        listItem.innerHTML = `
+            <span class="icon">${getIconForObjectType(object.type)}</span>
+            <span>${object.name || object.type}</span>
+            <span class="visibility" data-uuid="${object.uuid}" data-visible="${object.visible}">👁️</span>
+        `;
+        outliner.appendChild(listItem);
 
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 50;
-            positions[i * 3 + 1] = Math.random() * 20;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+        listItem.addEventListener('click', (event) => {
+            // Prevent selecting object when clicking visibility icon
+            if (event.target.classList.contains('visibility')) return;
 
-            colors[i * 3] = Math.random();
-            colors[i * 3 + 1] = Math.random();
-            colors[i * 3 + 2] = Math.random();
+            if (systemState.selectedObject) {
+                const prevSelectedElement = document.querySelector(`#scene-outliner li[data-uuid="${systemState.selectedObject.uuid}"]`);
+                if (prevSelectedElement) prevSelectedElement.classList.remove('selected');
+            }
+            systemState.selectedObject = object;
+            systemState.transformControls.attach(object);
+            updatePropertiesPanel(object);
+            listItem.classList.add('selected');
+        });
 
-            sizes[i] = Math.random() * 3 + 1;
+        // Toggle visibility
+        listItem.querySelector('.visibility').addEventListener('click', (event) => {
+            object.visible = !object.visible;
+            event.target.textContent = object.visible ? '👁️' : '🚫';
+            event.target.dataset.visible = object.visible;
+        });
+    }
+
+    function getIconForObjectType(type) {
+        switch (type) {
+            case 'Scene': return '🌍';
+            case 'PerspectiveCamera': return '📸';
+            case 'DirectionalLight': return '💡';
+            case 'AmbientLight': return '💡';
+            case 'Mesh': return '📦';
+            case 'Points': return '✨';
+            default: return '❓';
+        }
+    }
+
+    // ===== PROPERTIES PANEL FUNCTIONS =====
+    function updatePropertiesPanel(object) {
+        const panel = document.getElementById('properties-panel');
+        panel.innerHTML = ''; // Clear previous content
+
+        if (!object) {
+            panel.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5);">لا يوجد كائن محدد</p>';
+            return;
         }
 
+        panel.innerHTML += `<h4>${object.name || object.type} - الخصائص</h4>`;
+
+        // Position
+        panel.innerHTML += `
+            <div class="control-group">
+                <label>الموضع (X, Y, Z):</label>
+                <div class="control-group-grid">
+                    <input type="number" id="prop-posX" value="${object.position.x.toFixed(2)}" step="0.1">
+                    <input type="number" id="prop-posY" value="${object.position.y.toFixed(2)}" step="0.1">
+                    <input type="number" id="prop-posZ" value="${object.position.z.toFixed(2)}" step="0.1">
+                </div>
+            </div>
+        `;
+        document.getElementById('prop-posX').addEventListener('input', (e) => { object.position.x = parseFloat(e.target.value); });
+        document.getElementById('prop-posY').addEventListener('input', (e) => { object.position.y = parseFloat(e.target.value); });
+        document.getElementById('prop-posZ').addEventListener('input', (e) => { object.position.z = parseFloat(e.target.value); });
+
+        // Rotation (Euler angles for simplicity)
+        panel.innerHTML += `
+            <div class="control-group">
+                <label>الدوران (X, Y, Z - درجات):</label>
+                <div class="control-group-grid">
+                    <input type="number" id="prop-rotX" value="${THREE.MathUtils.radToDeg(object.rotation.x).toFixed(2)}" step="1">
+                    <input type="number" id="prop-rotY" value="${THREE.MathUtils.radToDeg(object.rotation.y).toFixed(2)}" step="1">
+                    <input type="number" id="prop-rotZ" value="${THREE.MathUtils.radToDeg(object.rotation.z).toFixed(2)}" step="1">
+                </div>
+            </div>
+        `;
+        document.getElementById('prop-rotX').addEventListener('input', (e) => { object.rotation.x = THREE.MathUtils.degToRad(parseFloat(e.target.value)); });
+        document.getElementById('prop-rotY').addEventListener('input', (e) => { object.rotation.y = THREE.MathUtils.degToRad(parseFloat(e.target.value)); });
+        document.getElementById('prop-rotZ').addEventListener('input', (e) => { object.rotation.z = THREE.MathUtils.degToRad(parseFloat(e.target.value)); });
+
+        // Scale
+        panel.innerHTML += `
+            <div class="control-group">
+                <label>الحجم (X, Y, Z):</label>
+                <div class="control-group-grid">
+                    <input type="number" id="prop-scaleX" value="${object.scale.x.toFixed(2)}" step="0.1">
+                    <input type="number" id="prop-scaleY" value="${object.scale.y.toFixed(2)}" step="0.1">
+                    <input type="number" id="prop-scaleZ" value="${object.scale.z.toFixed(2)}" step="0.1">
+                </div>
+            </div>
+        `;
+        document.getElementById('prop-scaleX').addEventListener('input', (e) => { object.scale.x = parseFloat(e.target.value); });
+        document.getElementById('prop-scaleY').addEventListener('input', (e) => { object.scale.y = parseFloat(e.target.value); });
+        document.getElementById('prop-scaleZ').addEventListener('input', (e) => { object.scale.z = parseFloat(e.target.value); });
+
+        // Material properties if it's a Mesh
+        if (object.isMesh && object.material) {
+            panel.innerHTML += `<h4>خصائص المادة</h4>`;
+            if (object.material.color) {
+                panel.innerHTML += `
+                    <div class="control-group">
+                        <label>اللون:</label>
+                        <input type="color" id="prop-color" value="#${object.material.color.getHexString()}">
+                    </div>
+                `;
+                document.getElementById('prop-color').addEventListener('input', (e) => { object.material.color.set(e.target.value); });
+            }
+            if (object.material.metalness !== undefined) {
+                panel.innerHTML += `
+                    <div class="control-group">
+                        <label>المعدنية:</label>
+                        <input type="range" class="slider" id="prop-metalness" min="0" max="1" value="${object.material.metalness.toFixed(2)}" step="0.01">
+                    </div>
+                `;
+                document.getElementById('prop-metalness').addEventListener('input', (e) => { object.material.metalness = parseFloat(e.target.value); });
+            }
+            if (object.material.roughness !== undefined) {
+                panel.innerHTML += `
+                    <div class="control-group">
+                        <label>الخشونة:</label>
+                        <input type="range" class="slider" id="prop-roughness" min="0" max="1" value="${object.material.roughness.toFixed(2)}" step="0.01">
+                    </div>
+                `;
+                document.getElementById('prop-roughness').addEventListener('input', (e) => { object.material.roughness = parseFloat(e.target.value); });
+            }
+        }
+
+        // Add more properties as needed
+    }
+
+    // ===== ASSET MANAGEMENT FUNCTIONS =====
+    document.getElementById('import-model-btn')?.addEventListener('click', () => {
+        document.getElementById('import-model-input').click();
+    });
+
+    document.getElementById('import-model-input')?.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length === 0) return;
+
+        showNotification(`جاري استيراد ${files.length} نموذج...`, false);
+        
+        for (const file of files) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                systemState.gltfLoader.parse(e.target.result, '', (gltf) => {
+                    const model = gltf.scene;
+                    model.name = file.name.split('.')[0]; // Use filename as object name
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            child.userData.isSelectable = true; // Make all meshes selectable
+                        }
+                    });
+                    systemState.scene.add(model);
+                    addSceneObjectToOutliner(model);
+                    showNotification(`تم استيراد النموذج ${file.name} بنجاح!`, false);
+                }, (error) => {
+                    console.error('Error loading GLTF:', error);
+                    showNotification(`فشل استيراد النموذج ${file.name}`, true);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    document.getElementById('export-glb-btn')?.addEventListener('click', () => {
+        if (!systemState.selectedObject) {
+            showNotification('الرجاء تحديد كائن لتصديره.', true);
+            return;
+        }
+
+        showNotification(`جاري تصدير ${systemState.selectedObject.name || systemState.selectedObject.type} إلى GLB...`, false);
+
+        const exporter = new THREE.GLTFExporter();
+        exporter.parse(
+            systemState.selectedObject,
+            (result) => {
+                const blob = new Blob([result], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${systemState.selectedObject.name || 'scene_object'}.glb`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification('تم تصدير GLB بنجاح!', false);
+            },
+            (error) => {
+                console.error('Error exporting GLB:', error);
+                showNotification('فشل تصدير GLB.', true);
+            },
+            {
+                binary: true // Export as GLB
+            }
+        );
+    });
+
+    document.getElementById('export-scene-btn')?.addEventListener('click', () => {
+        showNotification('جاري تصدير المشهد الكامل إلى GLB...', false);
+
+        const exporter = new THREE.GLTFExporter();
+        exporter.parse(
+            systemState.scene,
+            (result) => {
+                const blob = new Blob([result], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'full_scene.glb';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification('تم تصدير المشهد الكامل بنجاح!', false);
+            },
+            (error) => {
+                console.error('Error exporting full scene GLB:', error);
+                showNotification('فشل تصدير المشهد الكامل.', true);
+            },
+            {
+                binary: true // Export as GLB
+            }
+        );
+    });
+
+    // ===== ADVANCED PARTICLE SYSTEM =====
+    function addAdvancedParticleSystem() {
+        const particleCount = 5000;
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        const color = new THREE.Color();
+
+        for (let i = 0; i < particleCount; i++) {
+            // Position
+            const x = (Math.random() * 2 - 1) * 50;
+            const y = (Math.random() * 2 - 1) * 50;
+            const z = (Math.random() * 2 - 1) * 50;
+
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+
+            // Color (random shades of primary color)
+            color.setHSL(0.3 + Math.random() * 0.2, 0.8, 0.5 + Math.random() * 0.3);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+        }
+
+        const particles = new THREE.BufferGeometry();
         particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        // particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); // Removed as size is fixed in material
 
         const particleMaterial = new THREE.PointsMaterial({
-            size: 2,
+            size: 0.2, // Adjusted size for better visual
             vertexColors: true,
             transparent: true,
             opacity: 0.8,
@@ -1011,7 +1295,7 @@
         const particleSystem = new THREE.Points(particles, particleMaterial);
         particleSystem.name = "AdvancedParticleSystem";
         particleSystem.userData.isSelectable = true;
-        scene.add(particleSystem);
+        systemState.scene.add(particleSystem);
     }
 
     // ===== PERFORMANCE MONITORING =====
@@ -1218,4 +1502,5 @@
 
 </body>
 </html>
+
 
