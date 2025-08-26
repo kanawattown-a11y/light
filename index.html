@@ -706,509 +706,510 @@
         }
     </script>
 
-    <script type="module">
-        // ===== ULTIMATE 3D SYSTEM - MAIN APPLICATION =====
-        
-        // Global State Management
-        class UltimateSystemState {
-            constructor() {
-                this.webgpuSupported = false;
-                this.webgpuDevice = null;
-                this.webgpuContext = null;
-                this.aiModelsLoaded = false;
-                this.wasmModuleLoaded = false;
-                this.physicsEnabled = false;
-                this.selectedObject = null;
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.performanceStats = {
-                    fps: 0,
-                    frameTime: 0,
-                    drawCalls: 0,
-                    triangles: 0
-                };
-            }
-        }
 
-        const systemState = new UltimateSystemState();
 
-        // ===== WEBGPU INITIALIZATION =====
-        async function initWebGPU() {
-            try {
-                if (!navigator.gpu) {
-                    console.warn('WebGPU not supported, falling back to WebGL');
-                    return false;
-                }
 
-                const adapter = await navigator.gpu.requestAdapter({
-                    powerPreference: 'high-performance'
-                });
-                
-                if (!adapter) {
-                    console.warn('No WebGPU adapter found');
-                    return false;
-                }
-
-                const device = await adapter.requestDevice({
-                    requiredFeatures: [],
-                    requiredLimits: {}
-                });
-
-                const canvas = document.getElementById('webgpu-canvas');
-                const context = canvas.getContext('webgpu');
-                
-                const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-                context.configure({
-                    device: device,
-                    format: canvasFormat,
-                    alphaMode: 'premultiplied'
-                });
-
-                systemState.webgpuSupported = true;
-                systemState.webgpuDevice = device;
-                systemState.webgpuContext = context;
-
-                updateGPUDisplay(adapter.info || { vendor: 'WebGPU', architecture: 'Unknown' });
-                showNotification('WebGPU تم تهيئته بنجاح!', false);
-                
-                return true;
-            } catch (error) {
-                console.error('WebGPU initialization failed:', error);
-                showNotification('فشل في تهيئة WebGPU، سيتم استخدام WebGL', true);
-                return false;
-            }
-        }
-
-        // ===== TENSORFLOW.JS AI INITIALIZATION =====
-        async function initAI() {
-            try {
-                // Load TensorFlow.js
-                await import('@tensorflow/tfjs');
-                await import('@tensorflow/tfjs-backend-webgl');
-                await import('@tensorflow/tfjs-backend-cpu');
-                
-                // Set backend preference
-                if (systemState.webgpuSupported) {
-                    await tf.setBackend('webgl');
-                } else {
-                    await tf.setBackend('cpu');
-                }
-
-                // Load a simple pre-trained model for object detection
-                // In a real implementation, you would load actual models
-                systemState.aiModelsLoaded = true;
-                updateAIDisplay('نشط - نماذج محملة');
-                showNotification('نظام الذكاء الاصطناعي جاهز!', false);
-                
-                return true;
-            } catch (error) {
-                console.error('AI initialization failed:', error);
-                updateAIDisplay('خطأ في التحميل');
-                return false;
-            }
-        }
-
-        // ===== WEBASSEMBLY INITIALIZATION =====
-        async function initWebAssembly() {
-            try {
-                // In a real implementation, you would load actual WASM modules
-                // For demonstration, we'll simulate WASM loading
-                
-                // Simulate loading time
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                systemState.wasmModuleLoaded = true;
-                updateWASMDisplay('محمل');
-                document.getElementById('wasm-status-text').textContent = 'محمل ونشط';
-                showNotification('WebAssembly تم تحميله بنجاح!', false);
-                
-                return true;
-            } catch (error) {
-                console.error('WASM initialization failed:', error);
-                updateWASMDisplay('فشل التحميل');
-                return false;
-            }
-        }
-
-        // ===== THREE.JS SCENE SETUP =====
-            <script type="module">
-                import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
-                import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
-                import { TransformControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/TransformControls.js";
-                import { GLTFLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
-                import { DRACOLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/DRACOLoader.js";
-                import { RGBELoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/RGBELoader.js";
-                import { EffectComposer } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/EffectComposer.js";
-                import { RenderPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/RenderPass.js";
-                import { UnrealBloomPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/UnrealBloomPass.js";
-            </script>
-        async function initThreeJS() {
+<script type="module">
+    // ===== ULTIMATE 3D SYSTEM - MAIN APPLICATION =====
     
+    // All module imports are now at the top level of the script
+    import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+    import { TransformControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/TransformControls.js";
+    import { GLTFLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/DRACOLoader.js";
+    import { RGBELoader } from "https://unpkg.com/three@0.165.0/examples/jsm/loaders/RGBELoader.js";
+    import { EffectComposer } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/EffectComposer.js";
+    import { RenderPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/RenderPass.js";
+    import { UnrealBloomPass } from "https://unpkg.com/three@0.165.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-            // Scene setup
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
-            
-            // Camera setup
-            const camera = new THREE.PerspectiveCamera(
-                75, 
-                window.innerWidth / window.innerWidth, 
-                0.1, 
-                2000
-            );
-            camera.position.set(15, 10, 25);
-            camera.name = "MainCamera";
-            
-            // Renderer setup (fallback to WebGL if WebGPU not available)
-            const canvas = document.getElementById('webgpu-canvas');
-            const renderer = new THREE.WebGLRenderer({ 
-                canvas: canvas,
-                antialias: true, 
-                powerPreference: "high-performance",
-                alpha: true
+    // Global State Management
+    class UltimateSystemState {
+        constructor() {
+            this.webgpuSupported = false;
+            this.webgpuDevice = null;
+            this.webgpuContext = null;
+            this.aiModelsLoaded = false;
+            this.wasmModuleLoaded = false;
+            this.physicsEnabled = false;
+            this.selectedObject = null;
+            this.scene = null;
+            this.camera = null;
+            this.renderer = null;
+            this.performanceStats = {
+                fps: 0,
+                frameTime: 0,
+                drawCalls: 0,
+                triangles: 0
+            };
+        }
+    }
+
+    const systemState = new UltimateSystemState();
+
+    // ===== WEBGPU INITIALIZATION =====
+    async function initWebGPU() {
+        try {
+            if (!navigator.gpu) {
+                console.warn('WebGPU not supported, falling back to WebGL');
+                return false;
+            }
+
+            const adapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance'
             });
             
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
-            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            if (!adapter) {
+                console.warn('No WebGPU adapter found');
+                return false;
+            }
 
-            // Controls
-            const orbitControls = new OrbitControls(camera, renderer.domElement);
-            orbitControls.enableDamping = true;
-            orbitControls.dampingFactor = 0.05;
+            const device = await adapter.requestDevice({
+                requiredFeatures: [],
+                requiredLimits: {}
+            });
+
+            const canvas = document.getElementById('webgpu-canvas');
+            const context = canvas.getContext('webgpu');
             
-            const transformControls = new TransformControls(camera, renderer.domElement);
-            scene.add(transformControls);
+            const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+            context.configure({
+                device: device,
+                format: canvasFormat,
+                alphaMode: 'premultiplied'
+            });
 
-            // Advanced lighting setup
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-            scene.add(ambientLight);
+            systemState.webgpuSupported = true;
+            systemState.webgpuDevice = device;
+            systemState.webgpuContext = context;
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            directionalLight.position.set(50, 50, 25);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 4096;
-            directionalLight.shadow.mapSize.height = 4096;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 500;
-            directionalLight.shadow.camera.left = -50;
-            directionalLight.shadow.camera.right = 50;
-            directionalLight.shadow.camera.top = 50;
-            directionalLight.shadow.camera.bottom = -50;
-            scene.add(directionalLight);
+            updateGPUDisplay(adapter.info || { vendor: 'WebGPU', architecture: 'Unknown' });
+            showNotification('WebGPU تم تهيئته بنجاح!', false);
+            
+            return true;
+        } catch (error) {
+            console.error('WebGPU initialization failed:', error);
+            showNotification('فشل في تهيئة WebGPU، سيتم استخدام WebGL', true);
+            return false;
+        }
+    }
 
-            // Advanced floor with PBR materials
-            const floorGeometry = new THREE.PlaneGeometry(100, 100);
-            const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x2a2a2a,
-                roughness: 0.1,
-                metalness: 0.8,
+    // ===== TENSORFLOW.JS AI INITIALIZATION =====
+    async function initAI() {
+        try {
+            // Load TensorFlow.js
+            await import('@tensorflow/tfjs');
+            await import('@tensorflow/tfjs-backend-webgl');
+            await import('@tensorflow/tfjs-backend-cpu');
+            
+            // Set backend preference
+            if (systemState.webgpuSupported) {
+                await tf.setBackend('webgl');
+            } else {
+                await tf.setBackend('cpu');
+            }
+
+            // In a real implementation, you would load actual models
+            systemState.aiModelsLoaded = true;
+            updateAIDisplay('نشط - نماذج محملة');
+            showNotification('نظام الذكاء الاصطناعي جاهز!', false);
+            
+            return true;
+        } catch (error) {
+            console.error('AI initialization failed:', error);
+            updateAIDisplay('خطأ في التحميل');
+            return false;
+        }
+    }
+
+    // ===== WEBASSEMBLY INITIALIZATION =====
+    async function initWebAssembly() {
+        try {
+            // In a real implementation, you would load actual WASM modules
+            // For demonstration, we'll simulate WASM loading
+            
+            // Simulate loading time
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            systemState.wasmModuleLoaded = true;
+            updateWASMDisplay('محمل');
+            document.getElementById('wasm-status-text').textContent = 'محمل ونشط';
+            showNotification('WebAssembly تم تحميله بنجاح!', false);
+            
+            return true;
+        } catch (error) {
+            console.error('WASM initialization failed:', error);
+            updateWASMDisplay('فشل التحميل');
+            return false;
+        }
+    }
+
+    // ===== THREE.JS SCENE SETUP =====
+    async function initThreeJS() {
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(
+            75, 
+            window.innerWidth / window.innerHeight, 
+            0.1, 
+            2000
+        );
+        camera.position.set(15, 10, 25);
+        camera.name = "MainCamera";
+        
+        // Renderer setup (fallback to WebGL if WebGPU not available)
+        const canvas = document.getElementById('webgpu-canvas');
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: canvas,
+            antialias: true, 
+            powerPreference: "high-performance",
+            alpha: true
+        });
+        
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        // Controls
+        const orbitControls = new OrbitControls(camera, renderer.domElement);
+        orbitControls.enableDamping = true;
+        orbitControls.dampingFactor = 0.05;
+        
+        const transformControls = new TransformControls(camera, renderer.domElement);
+        scene.add(transformControls);
+
+        // Advanced lighting setup
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.set(50, 50, 25);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 4096;
+        directionalLight.shadow.mapSize.height = 4096;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.camera.left = -50;
+        directionalLight.shadow.camera.right = 50;
+        directionalLight.shadow.camera.top = 50;
+        directionalLight.shadow.camera.bottom = -50;
+        scene.add(directionalLight);
+
+        // Advanced floor with PBR materials
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a,
+            roughness: 0.1,
+            metalness: 0.8,
+            envMapIntensity: 1.0
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        floor.name = "AdvancedFloor";
+        floor.userData.isSelectable = true;
+        scene.add(floor);
+
+        // Post-processing setup
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.8, 0.4, 0.85
+        );
+        composer.addPass(bloomPass);
+
+        // Store references
+        systemState.scene = scene;
+        systemState.camera = camera;
+        systemState.renderer = renderer;
+        systemState.orbitControls = orbitControls;
+        systemState.transformControls = transformControls;
+        systemState.composer = composer;
+
+        // Add some default objects
+        addDefaultObjects(scene);
+        
+        return { scene, camera, renderer, orbitControls, transformControls, composer };
+    }
+
+    // ===== ADD DEFAULT ADVANCED OBJECTS =====
+    function addDefaultObjects(scene) {
+        // Advanced geometric shapes with PBR materials
+        const geometries = [
+            { geo: new THREE.BoxGeometry(2, 2, 2), name: "AdvancedCube", pos: [5, 1, 0] },
+            { geo: new THREE.SphereGeometry(1.5, 32, 32), name: "AdvancedSphere", pos: [-5, 1.5, 0] },
+            { geo: new THREE.CylinderGeometry(1, 1, 3, 32), name: "AdvancedCylinder", pos: [0, 1.5, 5] },
+            { geo: new THREE.TorusGeometry(1.5, 0.5, 16, 100), name: "AdvancedTorus", pos: [0, 1.5, -5] }
+        ];
+
+        geometries.forEach((item, index) => {
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(index * 0.25, 0.8, 0.6),
+                roughness: 0.2 + index * 0.2,
+                metalness: 0.1 + index * 0.2,
                 envMapIntensity: 1.0
             });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
-            floor.name = "AdvancedFloor";
-            floor.userData.isSelectable = true;
-            scene.add(floor);
-
-            // Post-processing setup
-            const composer = new EffectComposer(renderer);
-            composer.addPass(new RenderPass(scene, camera));
             
-            const bloomPass = new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                0.8, 0.4, 0.85
-            );
-            composer.addPass(bloomPass);
+            const mesh = new THREE.Mesh(item.geo, material);
+            mesh.position.set(...item.pos);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.name = item.name;
+            mesh.userData.isSelectable = true;
+            scene.add(mesh);
+        });
 
-            // Store references
-            systemState.scene = scene;
-            systemState.camera = camera;
-            systemState.renderer = renderer;
-            systemState.orbitControls = orbitControls;
-            systemState.transformControls = transformControls;
-            systemState.composer = composer;
+        // Advanced particle system
+        createAdvancedParticleSystem(scene);
+    }
 
-            // Add some default objects
-            addDefaultObjects(scene);
+    // ===== ADVANCED PARTICLE SYSTEM =====
+    function createAdvancedParticleSystem(scene) {
+        const particleCount = 1000;
+        const particles = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 50;
+            positions[i * 3 + 1] = Math.random() * 20;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+
+            colors[i * 3] = Math.random();
+            colors[i * 3 + 1] = Math.random();
+            colors[i * 3 + 2] = Math.random();
+
+            sizes[i] = Math.random() * 3 + 1;
+        }
+
+        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 2,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            sizeAttenuation: true
+        });
+
+        const particleSystem = new THREE.Points(particles, particleMaterial);
+        particleSystem.name = "AdvancedParticleSystem";
+        particleSystem.userData.isSelectable = true;
+        scene.add(particleSystem);
+    }
+
+    // ===== PERFORMANCE MONITORING =====
+    class PerformanceMonitor {
+        constructor() {
+            this.frameCount = 0;
+            this.lastTime = performance.now();
+            this.fps = 0;
+        }
+
+        update() {
+            this.frameCount++;
+            const currentTime = performance.now();
             
-            return { scene, camera, renderer, orbitControls, transformControls, composer };
-        }
-
-        // ===== ADD DEFAULT ADVANCED OBJECTS =====
-        function addDefaultObjects(scene) {
-            // Advanced geometric shapes with PBR materials
-            const geometries = [
-                { geo: new THREE.BoxGeometry(2, 2, 2), name: "AdvancedCube", pos: [5, 1, 0] },
-                { geo: new THREE.SphereGeometry(1.5, 32, 32), name: "AdvancedSphere", pos: [-5, 1.5, 0] },
-                { geo: new THREE.CylinderGeometry(1, 1, 3, 32), name: "AdvancedCylinder", pos: [0, 1.5, 5] },
-                { geo: new THREE.TorusGeometry(1.5, 0.5, 16, 100), name: "AdvancedTorus", pos: [0, 1.5, -5] }
-            ];
-
-            geometries.forEach((item, index) => {
-                const material = new THREE.MeshStandardMaterial({
-                    color: new THREE.Color().setHSL(index * 0.25, 0.8, 0.6),
-                    roughness: 0.2 + index * 0.2,
-                    metalness: 0.1 + index * 0.2,
-                    envMapIntensity: 1.0
-                });
-                
-                const mesh = new THREE.Mesh(item.geo, material);
-                mesh.position.set(...item.pos);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                mesh.name = item.name;
-                mesh.userData.isSelectable = true;
-                scene.add(mesh);
-            });
-
-            // Advanced particle system
-            createAdvancedParticleSystem(scene);
-        }
-
-        // ===== ADVANCED PARTICLE SYSTEM =====
-        function createAdvancedParticleSystem(scene) {
-            const particleCount = 1000;
-            const particles = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            const sizes = new Float32Array(particleCount);
-
-            for (let i = 0; i < particleCount; i++) {
-                positions[i * 3] = (Math.random() - 0.5) * 50;
-                positions[i * 3 + 1] = Math.random() * 20;
-                positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
-
-                colors[i * 3] = Math.random();
-                colors[i * 3 + 1] = Math.random();
-                colors[i * 3 + 2] = Math.random();
-
-                sizes[i] = Math.random() * 3 + 1;
-            }
-
-            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 2,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                sizeAttenuation: true
-            });
-
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            particleSystem.name = "AdvancedParticleSystem";
-            particleSystem.userData.isSelectable = true;
-            scene.add(particleSystem);
-        }
-
-        // ===== PERFORMANCE MONITORING =====
-        class PerformanceMonitor {
-            constructor() {
+            if (currentTime - this.lastTime >= 1000) {
+                this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
                 this.frameCount = 0;
-                this.lastTime = performance.now();
-                this.fps = 0;
-            }
-
-            update() {
-                this.frameCount++;
-                const currentTime = performance.now();
+                this.lastTime = currentTime;
                 
-                if (currentTime - this.lastTime >= 1000) {
-                    this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
-                    this.frameCount = 0;
-                    this.lastTime = currentTime;
-                    
-                    document.getElementById('fps-display').textContent = this.fps;
-                    systemState.performanceStats.fps = this.fps;
+                document.getElementById('fps-display').textContent = this.fps;
+                systemState.performanceStats.fps = this.fps;
+            }
+        }
+    }
+
+    const performanceMonitor = new PerformanceMonitor();
+
+    // ===== ANIMATION LOOP =====
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        performanceMonitor.update();
+        
+        if (systemState.orbitControls) {
+            systemState.orbitControls.update();
+        }
+        
+        // Animate particles
+        if (systemState.scene) {
+            const particleSystem = systemState.scene.getObjectByName("AdvancedParticleSystem");
+            if (particleSystem) {
+                particleSystem.rotation.y += 0.001;
+                const positions = particleSystem.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] += Math.sin(Date.now() * 0.001 + i) * 0.01;
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            }
+        }
+        
+        if (systemState.composer) {
+            systemState.composer.render();
+        } else if (systemState.renderer && systemState.scene && systemState.camera) {
+            systemState.renderer.render(systemState.scene, systemState.camera);
+        }
+    }
+
+    // ===== UI HELPER FUNCTIONS =====
+    function updateGPUDisplay(info) {
+        document.getElementById('gpu-display').textContent = 
+            `${info.vendor || 'Unknown'} ${info.architecture || ''}`;
+    }
+
+    function updateAIDisplay(status) {
+        document.getElementById('ai-display').textContent = status;
+    }
+
+    function updateWASMDisplay(status) {
+        document.getElementById('wasm-display').textContent = status;
+    }
+
+    function showNotification(message, isError = false) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.background = isError ? 
+            'linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%)' :
+            'linear-gradient(135deg, var(--success-color) 0%, #059669 100%)';
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // ===== BACKGROUND PARTICLES =====
+    function createBackgroundParticles() {
+        const container = document.getElementById('bg-particles');
+        const particleCount = 50;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+            container.appendChild(particle);
+        }
+    }
+
+    // ===== EVENT LISTENERS =====
+    function setupEventListeners() {
+        // Window resize
+        window.addEventListener('resize', () => {
+            if (systemState.camera && systemState.renderer) {
+                systemState.camera.aspect = window.innerWidth / window.innerHeight;
+                systemState.camera.updateProjectionMatrix();
+                systemState.renderer.setSize(window.innerWidth, window.innerHeight);
+                if (systemState.composer) {
+                    systemState.composer.setSize(window.innerWidth, window.innerHeight);
                 }
             }
-        }
+        });
 
-        const performanceMonitor = new PerformanceMonitor();
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const parent = tab.closest('.panel-content');
+                parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                parent.querySelector(`#${tab.dataset.tab}`).classList.add('active');
+            });
+        });
 
-        // ===== ANIMATION LOOP =====
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            performanceMonitor.update();
-            
-            if (systemState.orbitControls) {
-                systemState.orbitControls.update();
-            }
-            
-            // Animate particles
-            if (systemState.scene) {
-                const particleSystem = systemState.scene.getObjectByName("AdvancedParticleSystem");
-                if (particleSystem) {
-                    particleSystem.rotation.y += 0.001;
-                    const positions = particleSystem.geometry.attributes.position.array;
-                    for (let i = 1; i < positions.length; i += 3) {
-                        positions[i] += Math.sin(Date.now() * 0.001 + i) * 0.01;
-                    }
-                    particleSystem.geometry.attributes.position.needsUpdate = true;
-                }
-            }
-            
-            if (systemState.composer) {
-                systemState.composer.render();
-            } else if (systemState.renderer && systemState.scene && systemState.camera) {
-                systemState.renderer.render(systemState.scene, systemState.camera);
-            }
-        }
-
-        // ===== UI HELPER FUNCTIONS =====
-        function updateGPUDisplay(info) {
-            document.getElementById('gpu-display').textContent = 
-                `${info.vendor || 'Unknown'} ${info.architecture || ''}`;
-        }
-
-        function updateAIDisplay(status) {
-            document.getElementById('ai-display').textContent = status;
-        }
-
-        function updateWASMDisplay(status) {
-            document.getElementById('wasm-display').textContent = status;
-        }
-
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.background = isError ? 
-                'linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%)' :
-                'linear-gradient(135deg, var(--success-color) 0%, #059669 100%)';
-            notification.style.display = 'block';
-            
+        // AI Controls
+        document.getElementById('ai-object-recognition')?.addEventListener('click', () => {
+            showNotification('تحليل الكائنات بالذكاء الاصطناعي...', false);
+            // Simulate AI processing
             setTimeout(() => {
-                notification.style.display = 'none';
+                showNotification('تم تحليل 5 كائنات في المشهد', false);
+            }, 2000);
+        });
+
+        document.getElementById('ai-performance-optimize')?.addEventListener('click', () => {
+            showNotification('تحسين الأداء التلقائي نشط', false);
+        });
+
+        // Physics Controls
+        document.getElementById('physics-toggle')?.addEventListener('click', () => {
+            systemState.physicsEnabled = !systemState.physicsEnabled;
+            showNotification(
+                systemState.physicsEnabled ? 'تم تفعيل الفيزياء' : 'تم إيقاف الفيزياء', 
+                false
+            );
+        });
+
+        // WASM Controls
+        document.getElementById('wasm-benchmark')?.addEventListener('click', () => {
+            showNotification('تشغيل اختبار أداء WebAssembly...', false);
+            // Simulate benchmark
+            setTimeout(() => {
+                showNotification('النتيجة: 15,000 عملية/ثانية', false);
             }, 3000);
-        }
+        });
+    }
 
-        // ===== BACKGROUND PARTICLES =====
-        function createBackgroundParticles() {
-            const container = document.getElementById('bg-particles');
-            const particleCount = 50;
+    // ===== MAIN INITIALIZATION =====
+    async function initializeUltimateSystem() {
+        try {
+            // Show loading
+            document.getElementById('loading-overlay').style.display = 'flex';
             
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
-                container.appendChild(particle);
-            }
+            // Create background particles
+            createBackgroundParticles();
+            
+            // Initialize core systems
+            console.log('Initializing WebGPU...');
+            await initWebGPU();
+            
+            console.log('Initializing AI systems...');
+            await initAI();
+            
+            console.log('Initializing WebAssembly...');
+            await initWebAssembly();
+            
+            console.log('Initializing 3D scene...');
+            await initThreeJS();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Hide loading
+            document.getElementById('loading-overlay').style.display = 'none';
+            
+            // Start animation loop
+            animate();
+            
+            showNotification('النظام الأقوى جاهز للاستخدام!', false);
+            
+        } catch (error) {
+            console.error('System initialization failed:', error);
+            showNotification('فشل في تهيئة النظام', true);
+            document.getElementById('loading-overlay').style.display = 'none';
         }
+    }
 
-        // ===== EVENT LISTENERS =====
-        function setupEventListeners() {
-            // Window resize
-            window.addEventListener('resize', () => {
-                if (systemState.camera && systemState.renderer) {
-                    systemState.camera.aspect = window.innerWidth / window.innerHeight;
-                    systemState.camera.updateProjectionMatrix();
-                    systemState.renderer.setSize(window.innerWidth, window.innerHeight);
-                    if (systemState.composer) {
-                        systemState.composer.setSize(window.innerWidth, window.innerHeight);
-                    }
-                }
-            });
+    // Start the ultimate system
+    initializeUltimateSystem();
 
-            // Tab switching
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const parent = tab.closest('.panel-content');
-                    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    tab.classList.add('active');
-                    parent.querySelector(`#${tab.dataset.tab}`).classList.add('active');
-                });
-            });
+</script>
 
-            // AI Controls
-            document.getElementById('ai-object-recognition')?.addEventListener('click', () => {
-                showNotification('تحليل الكائنات بالذكاء الاصطناعي...', false);
-                // Simulate AI processing
-                setTimeout(() => {
-                    showNotification('تم تحليل 5 كائنات في المشهد', false);
-                }, 2000);
-            });
-
-            document.getElementById('ai-performance-optimize')?.addEventListener('click', () => {
-                showNotification('تحسين الأداء التلقائي نشط', false);
-            });
-
-            // Physics Controls
-            document.getElementById('physics-toggle')?.addEventListener('click', () => {
-                systemState.physicsEnabled = !systemState.physicsEnabled;
-                showNotification(
-                    systemState.physicsEnabled ? 'تم تفعيل الفيزياء' : 'تم إيقاف الفيزياء', 
-                    false
-                );
-            });
-
-            // WASM Controls
-            document.getElementById('wasm-benchmark')?.addEventListener('click', () => {
-                showNotification('تشغيل اختبار أداء WebAssembly...', false);
-                // Simulate benchmark
-                setTimeout(() => {
-                    showNotification('النتيجة: 15,000 عملية/ثانية', false);
-                }, 3000);
-            });
-        }
-
-        // ===== MAIN INITIALIZATION =====
-        async function initializeUltimateSystem() {
-            try {
-                // Show loading
-                document.getElementById('loading-overlay').style.display = 'flex';
-                
-                // Create background particles
-                createBackgroundParticles();
-                
-                // Initialize core systems
-                console.log('Initializing WebGPU...');
-                await initWebGPU();
-                
-                console.log('Initializing AI systems...');
-                await initAI();
-                
-                console.log('Initializing WebAssembly...');
-                await initWebAssembly();
-                
-                console.log('Initializing 3D scene...');
-                await initThreeJS();
-                
-                // Setup event listeners
-                setupEventListeners();
-                
-                // Hide loading
-                document.getElementById('loading-overlay').style.display = 'none';
-                
-                // Start animation loop
-                animate();
-                
-                showNotification('النظام الأقوى جاهز للاستخدام!', false);
-                
-            } catch (error) {
-                console.error('System initialization failed:', error);
-                showNotification('فشل في تهيئة النظام', true);
-                document.getElementById('loading-overlay').style.display = 'none';
-            }
-        }
-
-        // Start the ultimate system
-        initializeUltimateSystem();
-
-    </script>
 </body>
 </html>
 
